@@ -1,6 +1,8 @@
 package com.oc.springproject5.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.oc.springproject5.exception.AlreadyExistException;
+import com.oc.springproject5.exception.NotFoundException;
 import com.oc.springproject5.model.Person;
 import com.oc.springproject5.service.PersonService;
 import org.junit.jupiter.api.BeforeEach;
@@ -74,7 +76,7 @@ public class PersonControllerTest {
 
     @Test
     void testAddPerson_Conflict() throws Exception {
-        when(personService.addPerson(any(Person.class))).thenThrow(new IllegalArgumentException("Person already exists"));
+        when(personService.addPerson(any(Person.class))).thenThrow(new AlreadyExistException("Person already exists"));
 
         mockMvc.perform(post("/person")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -104,7 +106,7 @@ public class PersonControllerTest {
     @Test
     void testUpdatePerson_NotFound() throws Exception {
         when(personService.updatePerson(eq("Ghost"), eq("Person"), any(Person.class)))
-                .thenThrow(new IllegalArgumentException("Person not found"));
+                .thenThrow(new NotFoundException("Person not found"));
 
         mockMvc.perform(put("/person")
                         .param("firstName", "Ghost")
@@ -128,7 +130,7 @@ public class PersonControllerTest {
 
     @Test
     void testDeletePerson_NotFound() throws Exception {
-        doThrow(new IllegalArgumentException("Person not found"))
+        doThrow(new NotFoundException("Person not found"))
                 .when(personService).deletePerson("Ghost", "Unknown");
 
         mockMvc.perform(delete("/person")

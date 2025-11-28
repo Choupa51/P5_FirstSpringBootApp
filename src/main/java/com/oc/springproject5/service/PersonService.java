@@ -1,5 +1,7 @@
 package com.oc.springproject5.service;
 
+import com.oc.springproject5.exception.AlreadyExistException;
+import com.oc.springproject5.exception.NotFoundException;
 import com.oc.springproject5.model.MedicalRecord;
 import com.oc.springproject5.model.Person;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,8 @@ public class PersonService {
     @Autowired
     private DataService dataService;
 
+    private static int default_adulte_age = 99;
+
     public List<Person> getAllPersons() {
         System.out.println("Récupération de toutes les personnes");
         return dataService.getAllPersons();
@@ -26,12 +30,11 @@ public class PersonService {
 
         List<Person> persons = dataService.getAllPersons();
 
-        // Vérification si la personne existe déjà
         for (Person p : persons) {
             if (p.getFirstName().equalsIgnoreCase(person.getFirstName())
                     && p.getLastName().equalsIgnoreCase(person.getLastName())) {
                 System.err.println("La personne " + person.getFirstName() + " " + person.getLastName() + " existe déjà");
-                throw new IllegalArgumentException("Cette personne existe déjà");
+                throw new AlreadyExistException("Cette personne existe déjà");
             }
         }
 
@@ -46,23 +49,13 @@ public class PersonService {
         System.out.println("Mise à jour de la personne : " + firstName + " " + lastName);
 
         List<Person> persons = dataService.getAllPersons();
-        Person personToUpdate = null;
 
-        // Recherche de la personne à modifier
-        for (Person p : persons) {
-            if (p.getFirstName().equalsIgnoreCase(firstName)
-                    && p.getLastName().equalsIgnoreCase(lastName)) {
-                personToUpdate = p;
-                break;
-            }
-        }
+        Person personToUpdate = persons.stream()
+                .filter(p -> p.getFirstName().equalsIgnoreCase(firstName)
+                        && p.getLastName().equalsIgnoreCase(lastName))
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("Personne non trouvée"));
 
-        if (personToUpdate == null) {
-            System.err.println("Personne non trouvée : " + firstName + " " + lastName);
-            throw new IllegalArgumentException("Personne non trouvée");
-        }
-
-        // Mise à jour des champs (firstName et lastName ne changent pas selon les specs)
         if (updatedPerson.getAddress() != null) {
             personToUpdate.setAddress(updatedPerson.getAddress());
         }
@@ -92,7 +85,6 @@ public class PersonService {
         List<Person> updatedPersons = new ArrayList<>();
         boolean found = false;
 
-        // Reconstruction de la liste sans la personne à supprimer
         for (Person p : persons) {
             if (!(p.getFirstName().equalsIgnoreCase(firstName)
                     && p.getLastName().equalsIgnoreCase(lastName))) {
@@ -103,8 +95,7 @@ public class PersonService {
         }
 
         if (!found) {
-            System.err.println("Personne non trouvée pour suppression : " + firstName + " " + lastName);
-            throw new IllegalArgumentException("Personne non trouvée");
+            throw new NotFoundException("Personne non trouvée");
         }
 
         dataService.savePersons(updatedPersons);
@@ -134,7 +125,7 @@ public class PersonService {
             householdMember.put("firstName", person.getFirstName());
             householdMember.put("lastName", person.getLastName());
 
-            if (age <= 18) {
+            if (age < 18) {
                 // C'est un enfant
                 Map<String, Object> child = new HashMap<>();
                 child.put("firstName", person.getFirstName());
@@ -167,8 +158,8 @@ public class PersonService {
         }
 
         // Si pas de dossier médical trouvé, considérer comme adulte (âge > 18)
-        System.out.println("Aucun dossier médical trouvé pour " + firstName + " " + lastName + ", âge par défaut : 25 ans");
-        return 25;
+        System.out.println("Aucun dossier médical trouvé pour " + firstName + " " + lastName);
+        return default_adulte_age;
     }
 
     private int calculateAge(String birthdate) {
@@ -187,7 +178,7 @@ public class PersonService {
             return java.time.Period.between(birth, today).getYears();
         } catch (Exception e) {
             System.err.println("Erreur lors du calcul de l'âge pour la date : " + birthdate + " - " + e.getMessage());
-            return 25; // âge par défaut si erreur de parsing
+            return default_adulte_age;
         }
     }
 
@@ -197,6 +188,10 @@ public class PersonService {
         List<Person> personsAtAddress = dataService.getPersonsByAddress(address);
         String stationNumber = dataService.getFirestationNumberAddress(address);
         List<Map<String, Object>> residents = new ArrayList<>();
+
+        if (personsAtAddress.isEmpty()) {
+            throw new NotFoundException("Aucun habitant trouvé à l'adresse : " + address);
+        }
 
         for (Person person : personsAtAddress) {
             Map<String, Object> resident = new HashMap<>();

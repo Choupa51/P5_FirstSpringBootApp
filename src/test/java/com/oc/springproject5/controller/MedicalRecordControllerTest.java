@@ -1,6 +1,8 @@
 package com.oc.springproject5.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.oc.springproject5.exception.AlreadyExistException;
+import com.oc.springproject5.exception.NotFoundException;
 import com.oc.springproject5.model.MedicalRecord;
 import com.oc.springproject5.service.MedicalRecordService;
 import org.junit.jupiter.api.BeforeEach;
@@ -83,7 +85,7 @@ class MedicalRecordControllerTest {
                 Arrays.asList("aspirin:100mg"), Arrays.asList("peanut"));
 
         when(medicalRecordService.addMedicalRecord(any(MedicalRecord.class)))
-                .thenThrow(new IllegalArgumentException("Ce dossier médical existe déjà"));
+                .thenThrow(new AlreadyExistException("Ce dossier médical existe déjà"));
 
         mockMvc.perform(post("/medicalRecord")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -121,7 +123,7 @@ class MedicalRecordControllerTest {
                 Arrays.asList("none"), Arrays.asList("none"));
 
         when(medicalRecordService.updateMedicalRecord(eq("Bob"), eq("Smith"), any(MedicalRecord.class)))
-                .thenThrow(new IllegalArgumentException("Dossier médical non trouvé"));
+                .thenThrow(new NotFoundException("Dossier médical non trouvé"));
 
         mockMvc.perform(put("/medicalRecord")
                         .param("firstName", "Bob")
@@ -150,7 +152,7 @@ class MedicalRecordControllerTest {
 
     @Test
     void testDeleteMedicalRecord_NotFound() throws Exception {
-        doThrow(new IllegalArgumentException("Dossier médical non trouvé"))
+        doThrow(new NotFoundException("Dossier médical non trouvé"))
                 .when(medicalRecordService).deleteMedicalRecord("Bob", "Smith");
 
         mockMvc.perform(delete("/medicalRecord")

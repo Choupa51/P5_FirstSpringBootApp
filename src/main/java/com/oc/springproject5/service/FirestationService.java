@@ -1,5 +1,7 @@
 package com.oc.springproject5.service;
 
+import com.oc.springproject5.exception.AlreadyExistException;
+import com.oc.springproject5.exception.NotFoundException;
 import com.oc.springproject5.model.Firestation;
 import com.oc.springproject5.model.MedicalRecord;
 import com.oc.springproject5.model.Person;
@@ -19,6 +21,8 @@ public class FirestationService {
     @Autowired
     private DataService dataService;
 
+    private static int default_adulte_age = 99;
+
     public List<Firestation> getAllFirestations() {
         System.out.println("Récupération de toutes les casernes");
         return dataService.getAllFirestations();
@@ -33,7 +37,7 @@ public class FirestationService {
         for (Firestation f : firestations) {
             if (f.getAddress().equalsIgnoreCase(firestation.getAddress())) {
                 System.err.println("Un mapping existe déjà pour l'adresse : " + firestation.getAddress());
-                throw new IllegalArgumentException("Un mapping existe déjà pour cette adresse");
+                throw new AlreadyExistException("Un mapping existe déjà pour cette adresse");
             }
         }
 
@@ -51,16 +55,14 @@ public class FirestationService {
         Firestation firestationToUpdate = null;
 
         // Recherche du mapping à modifier par adresse
-        for (Firestation f : firestations) {
-            if (f.getAddress().equalsIgnoreCase(address)) {
-                firestationToUpdate = f;
-                break;
-            }
-        }
+        firestationToUpdate = firestations.stream()
+                .filter(f -> f.getAddress().equalsIgnoreCase(address))
+                .findFirst()
+                .orElse(null);
 
         if (firestationToUpdate == null) {
             System.err.println("Aucun mapping trouvé pour l'adresse : " + address);
-            throw new IllegalArgumentException("Aucun mapping trouvé pour cette adresse");
+            throw new NotFoundException("Aucun mapping trouvé pour cette adresse");
         }
 
         // Mise à jour du numéro de station
@@ -92,7 +94,7 @@ public class FirestationService {
 
         if (!found) {
             System.err.println("Aucun mapping trouvé pour suppression à l'adresse : " + address);
-            throw new IllegalArgumentException("Aucun mapping trouvé pour cette adresse");
+            throw new NotFoundException("Aucun mapping trouvé pour cette adresse");
         }
 
         dataService.saveFirestations(updatedFirestations);
@@ -117,7 +119,7 @@ public class FirestationService {
 
         if (!found) {
             System.err.println("Aucun mapping trouvé pour suppression de la station : " + station);
-            throw new IllegalArgumentException("Aucun mapping trouvé pour cette station");
+            throw new NotFoundException("Aucun mapping trouvé pour cette station");
         }
 
         dataService.saveFirestations(updatedFirestations);
@@ -212,7 +214,7 @@ public class FirestationService {
             return java.time.Period.between(birth, today).getYears();
         } catch (Exception e) {
             System.err.println("Erreur lors du calcul de l'âge pour la date : " + birthdate + " - " + e.getMessage());
-            return 25; // âge par défaut si erreur de parsing
+            return default_adulte_age; // âge par défaut si erreur de parsing
         }
     }
 

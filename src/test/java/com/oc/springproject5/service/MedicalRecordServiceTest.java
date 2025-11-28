@@ -1,5 +1,7 @@
 package com.oc.springproject5.service;
 
+import com.oc.springproject5.exception.AlreadyExistException;
+import com.oc.springproject5.exception.NotFoundException;
 import com.oc.springproject5.model.MedicalRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,7 +70,7 @@ public class MedicalRecordServiceTest {
 
         when(dataService.getAllMedicalRecords()).thenReturn(medicalRecords);
 
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(AlreadyExistException.class, () ->
                 medicalRecordService.addMedicalRecord(duplicate));
 
         verify(dataService, never()).saveMedicalRecords(anyList());
@@ -95,7 +97,7 @@ public class MedicalRecordServiceTest {
         MedicalRecord updated = new MedicalRecord("Bob", "Smith", "05/05/1995",
                 Arrays.asList("none"), Arrays.asList("none"));
 
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(NotFoundException.class, () ->
                 medicalRecordService.updateMedicalRecord("Bob", "Smith", updated));
 
         verify(dataService, never()).saveMedicalRecords(anyList());
@@ -119,7 +121,7 @@ public class MedicalRecordServiceTest {
     void testDeleteMedicalRecord_NotFound() {
         when(dataService.getAllMedicalRecords()).thenReturn(medicalRecords);
 
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(NotFoundException.class, () ->
                 medicalRecordService.deleteMedicalRecord("Alice", "Smith"));
 
         verify(dataService, never()).saveMedicalRecords(anyList());

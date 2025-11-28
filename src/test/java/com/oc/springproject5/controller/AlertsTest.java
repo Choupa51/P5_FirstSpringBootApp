@@ -85,7 +85,7 @@ class AlertsTest {
         mockMvc.perform(get("/childAlert")
                         .param("address", "999 rue Inconnue"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(""));
+                .andExpect(content().string("[]"));
 
         verify(personService, times(1)).getChildrenAddress("999 rue Inconnue");
     }

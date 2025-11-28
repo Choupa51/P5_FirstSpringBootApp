@@ -2,6 +2,8 @@ package com.oc.springproject5.controller;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.oc.springproject5.exception.AlreadyExistException;
+import com.oc.springproject5.exception.NotFoundException;
 import com.oc.springproject5.model.Firestation;
 import com.oc.springproject5.service.FirestationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -92,7 +94,7 @@ public class FirestationControllerTest {
     void testAddFirestation_conflict() throws Exception {
         Firestation conflictFirestation = new Firestation("123 rue du Barde", "1");
         when(firestationService.addFirestation(any(Firestation.class)))
-                .thenThrow(new IllegalArgumentException("Mapping déjà existant"));
+                .thenThrow(new AlreadyExistException("Mapping déjà existant"));
 
         mockMvc.perform(post("/firestation")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -120,7 +122,7 @@ public class FirestationControllerTest {
     @Test
     void testUpdateFirestation_notFound() throws Exception {
         when(firestationService.updateFirestation(anyString(), any(Firestation.class)))
-                .thenThrow(new IllegalArgumentException("Aucun mapping trouvé"));
+                .thenThrow(new NotFoundException("Aucun mapping trouvé"));
 
         mockMvc.perform(put("/firestation")
                         .param("address", "999 rue Inconnue")

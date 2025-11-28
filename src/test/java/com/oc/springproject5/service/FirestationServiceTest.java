@@ -1,5 +1,7 @@
 package com.oc.springproject5.service;
 
+import com.oc.springproject5.exception.AlreadyExistException;
+import com.oc.springproject5.exception.NotFoundException;
 import com.oc.springproject5.model.Firestation;
 import com.oc.springproject5.model.MedicalRecord;
 import com.oc.springproject5.model.Person;
@@ -68,7 +70,7 @@ public class FirestationServiceTest {
         Firestation duplicate = new Firestation("123 rue du Barde", "1");
         when(dataService.getAllFirestations()).thenReturn(firestations);
 
-        assertThrows(IllegalArgumentException.class, () -> firestationService.addFirestation(duplicate));
+        assertThrows(AlreadyExistException.class, () -> firestationService.addFirestation(duplicate));
         verify(dataService, never()).saveFirestations(anyList());
     }
 
@@ -88,7 +90,7 @@ public class FirestationServiceTest {
         when(dataService.getAllFirestations()).thenReturn(firestations);
 
         Firestation update = new Firestation("999 rue du Lac", "10");
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(NotFoundException.class,
                 () -> firestationService.updateFirestation("999 rue du Lac", update));
         verify(dataService, never()).saveFirestations(anyList());
     }

@@ -1,5 +1,7 @@
 package com.oc.springproject5.service;
 
+import com.oc.springproject5.exception.AlreadyExistException;
+import com.oc.springproject5.exception.NotFoundException;
 import com.oc.springproject5.model.MedicalRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,7 +30,7 @@ public class MedicalRecordService {
             if (m.getFirstName().equalsIgnoreCase(medicalRecord.getFirstName())
                     && m.getLastName().equalsIgnoreCase(medicalRecord.getLastName())) {
                 System.err.println("Le dossier médical pour " + medicalRecord.getFirstName() + " " + medicalRecord.getLastName() + " existe déjà");
-                throw new IllegalArgumentException("Ce dossier médical existe déjà");
+                throw new AlreadyExistException("Ce dossier médical existe déjà");
             }
         }
 
@@ -46,17 +48,15 @@ public class MedicalRecordService {
         MedicalRecord medicalRecordToUpdate = null;
 
         // Recherche du dossier médical à modifier
-        for (MedicalRecord m : medicalRecords) {
-            if (m.getFirstName().equalsIgnoreCase(firstName)
-                    && m.getLastName().equalsIgnoreCase(lastName)) {
-                medicalRecordToUpdate = m;
-                break;
-            }
-        }
+        medicalRecordToUpdate = medicalRecords.stream()
+                .filter(m -> m.getFirstName().equalsIgnoreCase(firstName)
+                        && m.getLastName().equalsIgnoreCase(lastName))
+                .findFirst()
+                .orElse(null);
 
         if (medicalRecordToUpdate == null) {
             System.err.println("Dossier médical non trouvé : " + firstName + " " + lastName);
-            throw new IllegalArgumentException("Dossier médical non trouvé");
+            throw new NotFoundException("Dossier médical non trouvé");
         }
 
         // Mise à jour des champs (firstName et lastName ne changent pas selon les specs)
@@ -95,7 +95,7 @@ public class MedicalRecordService {
 
         if (!found) {
             System.err.println("Dossier médical non trouvé pour suppression : " + firstName + " " + lastName);
-            throw new IllegalArgumentException("Dossier médical non trouvé");
+            throw new NotFoundException("Dossier médical non trouvé");
         }
 
         dataService.saveMedicalRecords(updatedMedicalRecords);
